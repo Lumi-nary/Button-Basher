@@ -27,11 +27,15 @@ public class StaminaBarUI : MonoBehaviour
     /// Updates the UI fill image based on normalized stamina value.
     /// </summary>
     /// <param name="normalizedStamina">Value between 0 and 1.</param>
-    private void UpdateStaminaUI(float normalizedStamina)
+    private void UpdateStaminaUI(float currentStamina, float currentMaxStamina)
     {
-        if (fillImage != null)
+        if (fillImage != null && currentMaxStamina > 0) // Check currentMaxStamina > 0 to avoid division by zero
         {
-            fillImage.fillAmount = normalizedStamina;
+            fillImage.fillAmount = currentStamina / currentMaxStamina;
+        }
+        else if (fillImage != null)
+        {
+            fillImage.fillAmount = 0; // Or 1, depending on desired display if max is somehow 0
         }
     }
 }

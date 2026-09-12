@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro;
 
 public class KeyRandomizer : MonoBehaviour
 {
@@ -14,71 +13,111 @@ public class KeyRandomizer : MonoBehaviour
     [Tooltip("Reference to the UI for the second key button.")]
     public KeyButtonUI button2UI;
 
-    [Header("Game Modes")]
-    public Endurance endurance;
+    [Header("Game Modes Integration (Optional)")]
+    [Tooltip("Reference to the Endurance script if this randomizer affects it.")]
+    public Endurance endurance; // Assuming Endurance script has an OnKeysRandomized() method
 
     // List of allowed keys for randomization.
+    [Header("Key Randomization Settings")]
+    [Tooltip("Keys that can be chosen for button mashing. Ensure these don't conflict with other critical player inputs.")]
     public List<KeyCode> allowedKeys = new List<KeyCode>
     {
         KeyCode.A, KeyCode.S, KeyCode.D, KeyCode.F,
-        KeyCode.J, KeyCode.K, KeyCode.L
+        KeyCode.J, KeyCode.K, KeyCode.L // Example keys, customize as needed
     };
+
+    [Tooltip("Minimum number of correct presses before keys randomize.")]
+    public int minPressesForRandomize = 9;
+    [Tooltip("Maximum number of correct presses (exclusive) before keys randomize.")]
+    public int maxPressesForRandomize = 31;
+
 
     private int keyPressCount = 0;
     private int pressThreshold;
 
     private void Start()
     {
-        GenerateNewThreshold();
-        RandomizeKeys();
+        if (playerMovement == null)
+        {
+            Debug.LogError("PlayerMovement not assigned to KeyRandomizer on " + gameObject.name + ". KeyRandomizer will be disabled.");
+            enabled = false;
+            return;
+        }
+        if (button1UI == null || button2UI == null)
+        {
+            Debug.LogWarning("One or both KeyButtonUI references are not assigned to KeyRandomizer on " + gameObject.name + ". UI will not update correctly.");
+        }
+        if (allowedKeys.Count < 2)
+        {
+            Debug.LogError("AllowedKeys list in KeyRandomizer needs at least 2 keys to function. KeyRandomizer will be disabled. (" + gameObject.name + ")");
+            enabled = false;
+            return;
+        }
 
-        // Subscribe to key press event
-        PlayerMovement.OnKeyPressed += HandleKeyPress;
+
+        GenerateNewThreshold();
+        RandomizeKeysAndRecharge(); // Initial randomization and recharge
+
+        // Subscribe to the specific player's key press event
+        playerMovement.OnKeyPressed += HandleKeyPress;
     }
 
     private void OnDestroy()
     {
-        PlayerMovement.OnKeyPressed -= HandleKeyPress;
+        // Unsubscribe when this object is destroyed to prevent memory leaks or errors
+        if (playerMovement != null)
+        {
+            playerMovement.OnKeyPressed -= HandleKeyPress;
+        }
     }
 
-    private void Update()
+    private void HandleKeyPress(PlayerMovement sourcePlayer, KeyCode key, bool isCorrect)
     {
-        // Debug: Press 'R' to randomize keys.
-        //if (Input.GetKeyDown(KeyCode.R))
-        //{
-        //    RandomizeKeys();
-        //}
-    }
+        // This KeyRandomizer is only interested in events from its assigned playerMovement instance.
+        // The subscription in Start() already ensures this, so sourcePlayer check is redundant here.
 
-    private void HandleKeyPress(KeyCode key, bool isCorrect)
-    {
         if (isCorrect)
         {
             keyPressCount++;
 
             if (keyPressCount >= pressThreshold)
             {
-                RandomizeKeys();
-                keyPressCount = 0;
-                GenerateNewThreshold();
+                RandomizeKeysAndRecharge(); // Randomize and recharge
+                keyPressCount = 0;          // Reset counter
+                GenerateNewThreshold();     // Generate new threshold for next randomization
             }
         }
     }
 
     private void GenerateNewThreshold()
     {
-        pressThreshold = Random.Range(5, 21); // Inclusive lower, exclusive upper
-        //Debug.Log("Next key randomization in: " + pressThreshold + " presses.");
+        if (minPressesForRandomize >= maxPressesForRandomize)
+        {
+            Debug.LogWarning("minPressesForRandomize should be less than maxPressesForRandomize. Using default threshold of 15.");
+            pressThreshold = 15;
+            return;
+        }
+        pressThreshold = Random.Range(minPressesForRandomize, maxPressesForRandomize);
+        // Debug.Log(gameObject.name + ": Next key randomization in " + pressThreshold + " correct presses.");
     }
 
-    private void RandomizeKeys()
+    /// <summary>
+    /// Randomizes the player's movement keys, updates their UI, and recharges one lane switch charge.
+    /// </summary>
+    private void RandomizeKeysAndRecharge()
     {
-        if (allowedKeys.Count < 2) return;
+        if (allowedKeys.Count < 2)
+        {
+            Debug.LogWarning("Cannot randomize keys: Not enough allowed keys defined. (" + gameObject.name + ")");
+            return;
+        }
 
         int index1 = Random.Range(0, allowedKeys.Count);
         int index2;
-        do { index2 = Random.Range(0, allowedKeys.Count); }
-        while (index2 == index1);
+        do
+        {
+            index2 = Random.Range(0, allowedKeys.Count);
+        } while (index2 == index1 && allowedKeys.Count > 1); // Ensure different keys if more than one option
 
         KeyCode newKey1 = allowedKeys[index1];
         KeyCode newKey2 = allowedKeys[index2];
@@ -86,32 +125,33 @@ public class KeyRandomizer : MonoBehaviour
         playerMovement.key1 = newKey1;
         playerMovement.key2 = newKey2;
 
+        // Update the UI buttons to display the new keys
         UpdateUIButton(button1UI, newKey1);
         UpdateUIButton(button2UI, newKey2);
 
-        playerMovement.currentLaneCharges = playerMovement.maxLaneCharges;
-        //Debug.Log($"Keys randomized: {newKey1} and {newKey2}");
+        // Recharge one lane switch charge by calling the method in PlayerMovement
+        // This method should internally handle invoking OnLaneChargesChanged.
+        playerMovement.RechargeLaneSwitch(1);
+        // Debug.Log($"{gameObject.name}: Keys randomized to {newKey1} & {newKey2}. Lane charge added.");
 
+
+        // Notify Endurance mode if it's being used
         if (endurance != null)
         {
-            endurance.OnKeysRandomized();
+            endurance.OnKeysRandomized(); // Assuming this method exists and is needed by Endurance mode
         }
     }
 
-    void UpdateUIButton(KeyButtonUI buttonUI, KeyCode newKey)
+    private void UpdateUIButton(KeyButtonUI buttonUI, KeyCode newKey)
     {
-        // Update the assigned key in the UI script.
-        buttonUI.assignedKey = newKey;
-
-        // Update the TextMeshProUGUI child component to show the new key.
-        TextMeshProUGUI tmp = buttonUI.GetComponentInChildren<TextMeshProUGUI>();
-        if (tmp != null)
+        if (buttonUI != null)
         {
-            tmp.text = newKey.ToString();
+            buttonUI.UpdateDisplayedKey(newKey);
         }
         else
         {
-            Debug.LogWarning("KeyButtonUI: No TextMeshProUGUI component found in children to update key text.");
+            // This warning might be spammy if one UI isn't set, consider if it's needed once Start checks it.
+            // Debug.LogWarning("KeyRandomizer: A KeyButtonUI reference is null during UpdateUIButton. (" + gameObject.name + ")");
         }
     }
 }

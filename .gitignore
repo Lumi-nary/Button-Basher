@@ -70,3 +70,24 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+
+# ---------------------------------------------------------------------------
+# Third-party Asset Store packs - licensed content, not redistributable,
+# so they are kept out of this public repository.
+# See "Restoring the full project" in README.md.
+# ---------------------------------------------------------------------------
+/[Aa]ssets/Feel/
+/[Aa]ssets/MMData/
+/[Aa]ssets/Mesh/
+/[Aa]ssets/polyperfect/
+/[Aa]ssets/Plugins/BezierSolution/
+/[Aa]ssets/Materials/CubeMap/
+/[Aa]ssets/Materials/Panoramic/
+/[Aa]ssets/Feel.meta
+/[Aa]ssets/MMData.meta
+/[Aa]ssets/Mesh.meta
+/[Aa]ssets/polyperfect.meta
+/[Aa]ssets/Plugins.meta
+/[Aa]ssets/Materials/CubeMap.meta
+/[Aa]ssets/Materials/Panoramic.meta
