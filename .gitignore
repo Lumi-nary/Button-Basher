@@ -91,3 +91,5 @@ crashlytics-build.properties
 /[Aa]ssets/Plugins.meta
 /[Aa]ssets/Materials/CubeMap.meta
 /[Aa]ssets/Materials/Panoramic.meta
+
+/[Aa]ssets/Plugins/BezierSolution.meta
