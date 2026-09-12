@@ -6,6 +6,14 @@ Built in **Unity 2022.3.43f1**.
 
 > **Source-only mirror.** This repository contains the game's code, scenes, prefabs, audio and original art. The third-party Asset Store packs the scenes depend on are licensed content and are **not** redistributable, so they are excluded — see [Restoring the full project](#restoring-the-full-project). A prebuilt Windows player that needs no imports is on the [Releases](../../releases) page.
 
+## Screenshots
+
+![Button Basher main menu](docs/main-menu.jpg)
+<sub>Main menu.</sub>
+
+![Split-screen race](docs/splitscreen-race.jpg)
+<sub>Head-to-head split-screen. Each racer has their own randomised key prompts — left is on <b>B / 1</b>, right on <b>U / O</b> — plus switch charges, a speed readout and a stamina bar. The yellow boxes with question marks are power-up pickups, the snail in the top right is a Slow power-up landing on the opponent, and the banner is a quick-event reward.</sub>
+
 ## How it plays
 
 Each racer is shown **two keys**. Alternate them to build speed — pressing the same key twice in a row doesn't count, so you have to actually bash (`Scripts/Player/PlayerMovement.cs`, `KeyRandomizer.cs`).
